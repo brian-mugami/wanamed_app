@@ -1,6 +1,7 @@
 from django.urls import path
 from .views import DepartmentsView, ServicesView
 from .users import UsersView, LoginView, AuthAPI, LogoutApi
+from .patients import PatientsView
 
 urlpatterns = [
     path("register", UsersView.as_view(), name="register"),
@@ -29,6 +30,19 @@ urlpatterns = [
         }
     )),
     path("service/<str:pk>", ServicesView.as_view(
+        {
+            'get':'retrieve',
+            'put':'update',
+            'delete':'destroy'
+        }
+    )),
+         path("patient", PatientsView.as_view(
+        {
+            'get':'list',
+            'post':'create'
+        }
+    )),
+    path("patient/<str:pk>", PatientsView.as_view(
         {
             'get':'retrieve',
             'put':'update',

@@ -53,10 +53,8 @@ class UsersView(views.APIView):
 class LoginView(views.APIView):
     def post(self, request):
         email = request.data["email"]
-        userPassword = request.data["password"]
-        
-        #userBytes = userPassword.encode('utf-8')
-        
+        userPassword = request.data["password"] 
+        #userBytes = userPassword.encode('utf-8')  
         user = UsersModel.objects.filter(email=email).first()
         if user is not None:
             if check_password_hash(user.password, userPassword):

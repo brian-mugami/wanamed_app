@@ -1,9 +1,8 @@
-from django.http import HttpResponse
 from rest_framework.response import Response
 from rest_framework import viewsets, status
-from .models import UsersModel,PatientsModel,ServicesModel,DepartmentsModel
-from .serializers import UserSerializer,DepartmentSerializer,ServiceSerializer
-import bcrypt
+from .models import ServicesModel,DepartmentsModel
+from .serializers import DepartmentSerializer,ServiceSerializer
+
 # Create your views here.
 class ServicesView(viewsets.ViewSet):
     

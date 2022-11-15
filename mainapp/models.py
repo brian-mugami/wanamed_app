@@ -1,7 +1,7 @@
 from django.db import models
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
-from django.contrib.auth.models import  AbstractUser, BaseUserManager, User
+from django.contrib.auth.models import  AbstractUser
 from django.conf import settings
 
 ## Create your models here.
@@ -76,7 +76,11 @@ class PatientsModel(models.Model):
     gender = models.CharField(max_length=10, choices=GenderChoices.choices, default = GenderChoices.OTHER )
     date = models.DateTimeField(default=timezone.now)
     age = models.PositiveIntegerField(blank=False ,default=0)
-
+    
+    
+class ServicesModel(models.Model):
+    name = models.CharField(max_length=50, blank=False, unique=True)
+    charge = models.PositiveIntegerField(default=1000)
 
 class AppointmentModel(models.Model):
     patient_id = models.ForeignKey(PatientsModel,on_delete=models.CASCADE, blank=False)
@@ -84,10 +88,6 @@ class AppointmentModel(models.Model):
     doctor = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     date = models.DateTimeField()
     description = models.TextField(blank=True, max_length=100)
-    
-class ServicesModel(models.Model):
-    name = models.CharField(max_length=50, blank=False, unique=True)
-    charge = models.PositiveIntegerField(default=1000)
     
 class ReceptionModel(models.Model):
     patient_id = models.ForeignKey(PatientsModel,on_delete=models.CASCADE, blank=False)
