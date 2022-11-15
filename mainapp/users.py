@@ -2,7 +2,7 @@ from .models import UsersModel
 from .models import DepartmentsModel
 from .serializers import UserSerializer
 from rest_framework.response import Response
-from rest_framework import viewsets, status, views, exceptions, permissions
+from rest_framework import status, views, exceptions, permissions
 from .auth import UserAuth
 from werkzeug.security import check_password_hash,generate_password_hash
 from .services import create_token

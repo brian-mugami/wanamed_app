@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import  PatientsModel, DepartmentsModel, ServicesModel 
+from .models import  PatientsModel, DepartmentsModel, ServicesModel
 
 class UserSerializer(serializers.Serializer):
     id = serializers.IntegerField(read_only=True)
@@ -14,7 +14,16 @@ class UserSerializer(serializers.Serializer):
     date_joined = serializers.CharField(read_only=True)
     last_login = serializers.CharField(read_only=True)
     username = serializers.CharField()
-        
+  
+class AppointmentSerializer(serializers.Serializer):
+    id = serializers.IntegerField(read_only=True)
+    patient = serializers.CharField()
+    doctor = serializers.CharField()
+    department = serializers.CharField()
+    seen = serializers.BooleanField(read_only=True)
+    description = serializers.CharField()
+    date = serializers.DateTimeField()
+      
 class PatientSerializer(serializers.ModelSerializer):
     class Meta:
         model = PatientsModel
@@ -29,3 +38,4 @@ class ServiceSerializer(serializers.ModelSerializer):
     class Meta:
         model = ServicesModel
         fields = "__all__"
+        

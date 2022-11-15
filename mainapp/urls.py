@@ -2,14 +2,16 @@ from django.urls import path
 from .views import DepartmentsView, ServicesView
 from .users import UsersView, LoginView, AuthAPI, LogoutApi
 from .patients import PatientsView
+from .appointment import AppointmentView
 
 urlpatterns = [
     path("register", UsersView.as_view(), name="register"),
     path("register/<str:pk>", UsersView.as_view(), name="register_id"),
     path("login", LoginView.as_view(), name="login"),
     path("auth", AuthAPI.as_view(), name="auth"),
-    path("logout", LogoutApi.as_view(), name="loögout")
-        ,
+    path("logout", LogoutApi.as_view(), name="logout"),
+    path("appointment", AppointmentView.as_view(), name="appointment"),
+    path("appointment/<str:pk>", AppointmentView.as_view(), name="appointment"),
         path("dept", DepartmentsView.as_view(
         {
             'get':'list',

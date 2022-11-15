@@ -20,3 +20,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include('mainapp.urls')),
 ]
+
+admin.site.site_header = "Wanene Main User"
+admin.site.site_title = "Site Admin| Browser"
+admin.site.index_title = "My Club Index Title"

@@ -33,7 +33,10 @@ from django.conf import settings
         
         
 class DepartmentsModel(models.Model):
-    department = models.CharField(max_length=50, blank=False)
+    department = models.CharField(max_length=50, blank=False, unique=True)
+    
+    def __str__(self):
+        return  self.department
 
 class UsersModel(AbstractUser):
     class UserTypes(models.TextChoices):
@@ -51,10 +54,13 @@ class UsersModel(AbstractUser):
     email = models.EmailField(verbose_name="Email", max_length=255, unique=True)
     department = models.ForeignKey(DepartmentsModel, blank=False, on_delete=models.SET_NULL, null=True)
     username = models.CharField(max_length=20, unique=True, blank=False, null=True)
-
+    is_staff = models.BooleanField(default=True)
     #objects = UserManager()
     #USERNAME_FIELD = "username"
     #REQUIRED_FIELDS = ["first_name", "last_name", "password"]
+    
+    def __str__(self) -> str:
+        return self.username + " " + f"is a {self.usertype}"
     
 class PatientsModel(models.Model):
     class PatientChoices(models.TextChoices):
@@ -77,50 +83,57 @@ class PatientsModel(models.Model):
     date = models.DateTimeField(default=timezone.now)
     age = models.PositiveIntegerField(blank=False ,default=0)
     
+    def __str__(self) -> str:
+        return self. first_name + " " + self.sur_name
+    
     
 class ServicesModel(models.Model):
     name = models.CharField(max_length=50, blank=False, unique=True)
     charge = models.PositiveIntegerField(default=1000)
 
+    def __str__(self) -> str:
+        return self.name
+    
 class AppointmentModel(models.Model):
-    patient_id = models.ForeignKey(PatientsModel,on_delete=models.CASCADE, blank=False)
+    patient = models.ForeignKey(PatientsModel,on_delete=models.CASCADE, blank=False)
     department = models.ForeignKey(DepartmentsModel, on_delete=models.CASCADE)
     doctor = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     date = models.DateTimeField()
     description = models.TextField(blank=True, max_length=100)
+    seen = models.BooleanField(default=False)
     
 class ReceptionModel(models.Model):
-    patient_id = models.ForeignKey(PatientsModel,on_delete=models.CASCADE, blank=False)
+    patient = models.ForeignKey(PatientsModel,on_delete=models.CASCADE, blank=False)
     assigned_to = models.ForeignKey(DepartmentsModel, on_delete=models.CASCADE, blank=False)
     services = models.ManyToManyField(ServicesModel)
     description = models.TextField(blank=True,max_length=1000)
     
 class DoctorModel(models.Model):
-    patient_id = models.ForeignKey(PatientsModel,on_delete=models.CASCADE, blank=False)
+    patient = models.ForeignKey(PatientsModel,on_delete=models.CASCADE, blank=False)
     assigned_to = models.ForeignKey(DepartmentsModel, on_delete=models.CASCADE, blank=False)
     description = models.TextField(blank=True,max_length=1000)
     prescription = models.TextField(blank=True,max_length=1000)
     
 class LabModel(models.Model):
-    patient_id = models.ForeignKey(PatientsModel,on_delete=models.CASCADE, blank=False)
+    patient = models.ForeignKey(PatientsModel,on_delete=models.CASCADE, blank=False)
     assigned_to = models.ForeignKey(DepartmentsModel, on_delete=models.CASCADE, blank=False)
     description = models.TextField(blank=True,max_length=1000)
     upload = models.CharField(max_length=300, blank=True)
 
 class MiniLabModel(models.Model):
-    patient_id = models.ForeignKey(PatientsModel,on_delete=models.CASCADE, blank=False)
+    patient = models.ForeignKey(PatientsModel,on_delete=models.CASCADE, blank=False)
     assigned_to = models.ForeignKey(DepartmentsModel, on_delete=models.CASCADE, blank=False)
     description = models.TextField(blank=True,max_length=500)
     upload = models.CharField(max_length=300, blank=True)
     
 class XrayModel(models.Model):
-    patient_id = models.ForeignKey(PatientsModel,on_delete=models.CASCADE, blank=False)
+    patient = models.ForeignKey(PatientsModel,on_delete=models.CASCADE, blank=False)
     assigned_to = models.ForeignKey(DepartmentsModel, on_delete=models.CASCADE, blank=False)
     description = models.TextField(blank=True,max_length=500)
     upload = models.CharField(max_length=300, blank=True)
     
 class AccountsModel(models.Model):
-    patient_id = models.ForeignKey(PatientsModel,on_delete=models.CASCADE, blank=False)
+    patient = models.ForeignKey(PatientsModel,on_delete=models.CASCADE, blank=False)
     paid = models.BooleanField(default=False)
 
      
