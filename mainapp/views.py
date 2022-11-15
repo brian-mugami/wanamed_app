@@ -2,45 +2,87 @@ from django.http import HttpResponse
 from rest_framework.response import Response
 from rest_framework import viewsets, status
 from .models import UsersModel,PatientsModel,ServicesModel,DepartmentsModel
-from .serializers import UserSerializer
+from .serializers import UserSerializer,DepartmentSerializer,ServiceSerializer
+import bcrypt
 # Create your views here.
-
-class UsersView(viewsets.ViewSet):
+class ServicesView(viewsets.ViewSet):
+    
     def list(self, request):
-        users = UsersModel.objects.all()
-        serializer = UserSerializer(users, many=True)
+        services = ServicesModel.objects.all()
+        serializer = ServiceSerializer(services, many=True)
         return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
     
     def create(self, request):
-        user = UserSerializer(data=request.data)
-        if user.is_valid(raise_exception=True):
-            user.save()
-            return Response(data=user.data, status=status.HTTP_201_CREATED)
+        service = ServiceSerializer(data=request.data)
+        if service.is_valid(raise_exception=True):
+            service.save()
+            return Response(data=service.data, status=status.HTTP_201_CREATED)
         return Response(status=status.HTTP_400_BAD_REQUEST, data={"Message": "Bad request"})
+
     
     def retrieve(self, request, pk=None):
-        user = UsersModel.objects.get(id=pk)
-        serializer = UserSerializer(user)
-        if not user:
-            return Response(status=status.HTTP_400_BAD_REQUEST, data={"Message": "User not found"})
-        
-        return Response(data=serializer.data, status=status.HTTP_202_ACCEPTED)
+        service = ServicesModel.objects.get(id=pk)
+        if not service:
+            return Response(status=status.HTTP_404_NOT_FOUND, data={"message": "dept not found"})
+        serializer = ServiceSerializer(service)
+        return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
+    
     
     def destroy(self, request, pk=None):
-        user = UsersModel.objects.get(id=pk)
-        if not user:
-            return Response(status=status.HTTP_400_BAD_REQUEST, data={"Message": "User not found"})
-        
-        return Response(status=status.HTTP_204_NO_CONTENT, data={"Message": "User deleted"})
+        service = ServicesModel.objects.get(id=pk)
+        if not service:
+            return Response(status=status.HTTP_400_BAD_REQUEST, data={"Message": "Dept not found"})
+        service.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT, data={"Message": "service deleted"})
                         
     def update(self, request, pk=None):
-        user = UsersModel.objects.get(id=pk)
-        if not user:
-            return Response({"message": "user not found"}, status=status.HTTP_404_NOT_FOUND)
-        serializer = UserSerializer(instance=user, data=request.data)
+        service = ServicesModel.objects.get(id=pk)
+        if service is None:
+            return Response(status=status.HTTP_204_NO_CONTENT, data={"Message": "service not found"})
+        serializer = ServiceSerializer(instance=service, data=request.data)
         serializer.is_valid()
         serializer.save()
         return Response(data=serializer.data, status=status.HTTP_202_ACCEPTED)
-            
-        
-        
+
+class DepartmentsView(viewsets.ViewSet):
+    
+    def list(self, request):
+        depts = DepartmentsModel.objects.all()
+        serializer = DepartmentSerializer(depts, many=True)
+        return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
+    
+    def create(self, request):
+        department = DepartmentSerializer(data=request.data)
+        if department.is_valid(raise_exception=True):
+            department.save()
+            return Response(data=department.data, status=status.HTTP_201_CREATED)
+        return Response(status=status.HTTP_400_BAD_REQUEST, data={"Message": "Bad request"})
+
+    
+    def retrieve(self, request, pk=None):
+        dept = DepartmentsModel.objects.get(id=pk)
+        if not dept:
+            return Response(status=status.HTTP_404_NOT_FOUND, data={"message": "dept not found"})
+        serializer = DepartmentSerializer(dept)
+        return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
+    
+    
+    def destroy(self, request, pk=None):
+        dept = DepartmentsModel.objects.get(id=pk)
+        if not dept:
+            return Response(status=status.HTTP_400_BAD_REQUEST, data={"Message": "Dept not found"})
+        dept.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT, data={"Message": "Dept deleted"})
+                        
+    def update(self, request, pk=None):
+        dept = DepartmentsModel.objects.get(id=pk)
+        if dept is None:
+            return {"message": "dept not found"}
+        serializer = DepartmentSerializer(instance=dept, data=request.data)
+        serializer.is_valid()
+        serializer.save()
+        return Response(data=serializer.data, status=status.HTTP_202_ACCEPTED)
+
+
+
+
