@@ -1,39 +1,40 @@
 from django.db import models
+from random import randint
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
-from django.contrib.auth.models import  AbstractUser
-from django.conf import settings
+from django.contrib.auth.models import  AbstractUser, BaseUserManager
 
-## Create your models here.
-##class UserManager(BaseUserManager):
- #   def create_user(self,first_name: str, last_name:str, username:str,password:str=None, is_staff=False, is_superuser=False)->"User":
-# #       if not username:
- #           raise ValueError("User must have an username")
- #       if not first_name:
- #           raise ValueError("User must have a first name")
- #       if not last_name:
- #           raise ValueError("User must have a last name")
- #       
-# #       user = self.model(username=self.username)
- #       user.first_name = first_name
- #       user.last_name = last_name
- #       user.set_password(password)
-#        user.is_active = True
- #       user.is_staff = is_staff
- #       user.is_superuser = is_superuser
- #       user.save()
-#        
- #       return user
- #   
- #   def create_superuser(self, first_name, last_name, username, password):
- #       user = self.create_user(first_name=first_name, last_name=last_name,username=username,password=password ,is_staff=True, is_superuser=True)
- #       
- #       user.save()
- #       return user
+class UserManager(BaseUserManager):
+    def create_user(self,first_name: str, last_name:str, email:str,password:str=None, is_staff=True, is_superuser=False, usertype="USER", phone_number="0000"):
+        if not email:
+            raise ValueError("User must have an email")
+        if not first_name:
+            raise ValueError("User must have a first name")
+        if not last_name:
+            raise ValueError("User must have a last name")
+        
+        user = self.model(email=self.normalize_email(email))
+        user.first_name = first_name
+        user.last_name = last_name
+        user.set_password(password)
+        user.is_active = True
+        user.is_staff = is_staff
+        user.is_superuser = is_superuser
+        user.phone_number = phone_number
+        user.usertype = usertype
+        user.save()
+        
+        return user
+    
+    def create_superuser(self, first_name, last_name, email, password):
+        user = self.create_user(first_name=first_name, last_name=last_name,email=email,password=password ,is_staff=True, is_superuser=True, usertype="ADMIN", phone_number=randint(100000, 500000))     
+        user.save()
+        return user
         
         
 class DepartmentsModel(models.Model):
     department = models.CharField(max_length=50, blank=False, unique=True)
+    active = models.BooleanField(default=True)
     
     def __str__(self):
         return  self.department
@@ -48,19 +49,22 @@ class UsersModel(AbstractUser):
         ACCOUNTS = 'ACCOUNTS', _('ACCOUNTS')
         PHARMACIST = "PHARMACIST", _("PHARMACIST")
         INTERN = "INTERN", _("INTERN")
+        ADMIN = "ADMIN", _("ADMIN")
+        USER = "USER", _("USER")
         
     usertype = models.CharField(max_length=30, choices=UserTypes.choices)
     phone_number = models.CharField(max_length=20, unique=True)
     email = models.EmailField(verbose_name="Email", max_length=255, unique=True)
     department = models.ForeignKey(DepartmentsModel, blank=False, on_delete=models.SET_NULL, null=True)
-    username = models.CharField(max_length=20, unique=True, blank=False, null=True)
+    username = None
     is_staff = models.BooleanField(default=True)
-    #objects = UserManager()
-    #USERNAME_FIELD = "username"
-    #REQUIRED_FIELDS = ["first_name", "last_name", "password"]
+
+    objects = UserManager()
+    USERNAME_FIELD = "email"
+    REQUIRED_FIELDS = ["first_name", "last_name"]
     
     def __str__(self) -> str:
-        return self.username + " " + f"is a {self.usertype}"
+        return str(self.email)
     
 class PatientsModel(models.Model):
     class PatientChoices(models.TextChoices):
@@ -92,49 +96,92 @@ class ServicesModel(models.Model):
     charge = models.PositiveIntegerField(default=1000)
 
     def __str__(self) -> str:
-        return self.name
+        return self.name 
     
 class AppointmentModel(models.Model):
-    patient = models.ForeignKey(PatientsModel,on_delete=models.CASCADE, blank=False)
-    department = models.ForeignKey(DepartmentsModel, on_delete=models.CASCADE)
-    doctor = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    patient = models.ForeignKey(PatientsModel,on_delete=models.DO_NOTHING, blank=False)
+    department = models.ForeignKey(DepartmentsModel, on_delete=models.DO_NOTHING)
     date = models.DateTimeField()
     description = models.TextField(blank=True, max_length=100)
     seen = models.BooleanField(default=False)
+    
+    def __str__(self) -> str:
+        return f"{self.patient.first_name} to see {self.department}"
     
 class ReceptionModel(models.Model):
     patient = models.ForeignKey(PatientsModel,on_delete=models.CASCADE, blank=False)
     assigned_to = models.ForeignKey(DepartmentsModel, on_delete=models.CASCADE, blank=False)
     services = models.ManyToManyField(ServicesModel)
     description = models.TextField(blank=True,max_length=1000)
+    date = models.DateTimeField(default=timezone.now)
+    paid = models.BooleanField(default=False)
     
-class DoctorModel(models.Model):
-    patient = models.ForeignKey(PatientsModel,on_delete=models.CASCADE, blank=False)
-    assigned_to = models.ForeignKey(DepartmentsModel, on_delete=models.CASCADE, blank=False)
-    description = models.TextField(blank=True,max_length=1000)
-    prescription = models.TextField(blank=True,max_length=1000)
+ 
+    def get_services(self):
+        return "\n".join([ p.name for p in self.services.all()])
     
+
+    def get_service_charge(self):
+        return "\n".join([ str(p.charge) for p in self.services.all()])
+
+    
+    def __str__(self):
+        return f"{self.patient} assigned to {self.assigned_to} for {self.services.name}"
+
 class LabModel(models.Model):
     patient = models.ForeignKey(PatientsModel,on_delete=models.CASCADE, blank=False)
     assigned_to = models.ForeignKey(DepartmentsModel, on_delete=models.CASCADE, blank=False)
     description = models.TextField(blank=True,max_length=1000)
-    upload = models.CharField(max_length=300, blank=True)
+    upload = models.CharField(max_length=300, blank=True, null=True)
+    date = models.DateTimeField()
+    seen = models.BooleanField(default=False)
+    
+    def __str__(self):
+        return str(self.patient.first_name+" "+ self.patient.sur_name+" "+self.patient.middle_name)
 
-class MiniLabModel(models.Model):
+class NurseModel(models.Model):
     patient = models.ForeignKey(PatientsModel,on_delete=models.CASCADE, blank=False)
     assigned_to = models.ForeignKey(DepartmentsModel, on_delete=models.CASCADE, blank=False)
-    description = models.TextField(blank=True,max_length=500)
+    description = models.TextField(blank=True,max_length=1000)
     upload = models.CharField(max_length=300, blank=True)
+    date = models.DateTimeField(default=timezone.now)
+    seen = models.BooleanField(default=False)
+    
+    def __str__(self):
+        return str(self.patient.first_name+" "+ self.patient.sur_name+" "+self.patient.middle_name)
     
 class XrayModel(models.Model):
     patient = models.ForeignKey(PatientsModel,on_delete=models.CASCADE, blank=False)
     assigned_to = models.ForeignKey(DepartmentsModel, on_delete=models.CASCADE, blank=False)
     description = models.TextField(blank=True,max_length=500)
     upload = models.CharField(max_length=300, blank=True)
+    date = models.DateTimeField(default=timezone.now)
+    seen = models.BooleanField(default=False)
     
-class AccountsModel(models.Model):
+    def __str__(self):
+        return str(self.patient.first_name+" "+ self.patient.sur_name+" "+self.patient.middle_name)
+    
+class DoctorModel(models.Model):
     patient = models.ForeignKey(PatientsModel,on_delete=models.CASCADE, blank=False)
-    paid = models.BooleanField(default=False)
+    assigned_to = models.ForeignKey(DepartmentsModel, on_delete=models.CASCADE, blank=False)
+    description = models.TextField(blank=True,max_length=1000)
+    prescription = models.TextField(blank=True,max_length=1000)
+    date = models.DateTimeField(default=timezone.now)
+    seen = models.BooleanField(default=False)
+    
+    def __str__(self):
+        return str(self.patient.first_name+" "+ self.patient.sur_name+" "+self.patient.middle_name)
+    
+class OrthopedModel(models.Model):
+    patient = models.ForeignKey(PatientsModel,on_delete=models.CASCADE, blank=False)
+    assigned_to = models.ForeignKey(DepartmentsModel, on_delete=models.CASCADE, blank=False)
+    description = models.TextField(blank=True,max_length=1000)
+    prescription = models.TextField(blank=True,max_length=1000)
+    date = models.DateTimeField(default=timezone.now)
+    seen = models.BooleanField(default=False)
+    def __str__(self):
+        return str(self.patient.first_name+" "+ self.patient.sur_name+" "+self.patient.middle_name)
+    
 
      
     

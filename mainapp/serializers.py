@@ -1,28 +1,23 @@
 from rest_framework import serializers
-from .models import  PatientsModel, DepartmentsModel, ServicesModel
+from .models import  PatientsModel, DepartmentsModel, ServicesModel, ReceptionModel, UsersModel, AppointmentModel,LabModel,XrayModel,NurseModel
 
-class UserSerializer(serializers.Serializer):
-    id = serializers.IntegerField(read_only=True)
-    usertype = serializers.CharField()
-    first_name = serializers.CharField()
-    last_name = serializers.CharField()
-    email = serializers.EmailField()
-    password1 = serializers.CharField(write_only=True)
-    password2 = serializers.CharField(write_only=True)
-    phone_number = serializers.CharField()
-    department = serializers.CharField()
-    date_joined = serializers.CharField(read_only=True)
-    last_login = serializers.CharField(read_only=True)
-    username = serializers.CharField()
-  
-class AppointmentSerializer(serializers.Serializer):
-    id = serializers.IntegerField(read_only=True)
-    patient = serializers.CharField()
-    doctor = serializers.CharField()
-    department = serializers.CharField()
-    seen = serializers.BooleanField(read_only=True)
-    description = serializers.CharField()
-    date = serializers.DateTimeField()
+class UserSerializer(serializers.ModelSerializer):
+    department = serializers.PrimaryKeyRelatedField(queryset=DepartmentsModel.objects.all())
+    class Meta:  
+        model = UsersModel
+        fields = ["usertype", "first_name", "last_name", "email","phone_number","department"] 
+        write_only_fields = ["password",]
+        read_only_fields = ["last_login", "date_joined", "id", "is_staff", "is_superuser"]
+    
+class  ReceptionSerilizer(serializers.ModelSerializer):
+    services = serializers.PrimaryKeyRelatedField(queryset=ServicesModel.objects.all(),many=True)
+    patient = serializers.PrimaryKeyRelatedField(queryset=PatientsModel.objects.all())
+    assigned_to = serializers.PrimaryKeyRelatedField(queryset=DepartmentsModel.objects.all())
+    class Meta:
+        model = ReceptionModel
+        fields= ["services", "patient", "assigned_to", "description"]
+        read_only_fields=["id","paid"]
+        
       
 class PatientSerializer(serializers.ModelSerializer):
     class Meta:
@@ -38,4 +33,40 @@ class ServiceSerializer(serializers.ModelSerializer):
     class Meta:
         model = ServicesModel
         fields = "__all__"
+        
+class NurseSerializer(serializers.ModelSerializer):
+    patient = serializers.PrimaryKeyRelatedField(queryset=PatientsModel.objects.all())
+    assigned_to = serializers.PrimaryKeyRelatedField(queryset=DepartmentsModel.objects.all())
+    
+    class Meta:
+        model = NurseModel
+        fields = ["patient", "assigned_to", "upload", "description", "seen"]
+        read_only_fields = ["id",]
+
+class  AppointmentSerilizer(serializers.ModelSerializer):
+    patient = serializers.PrimaryKeyRelatedField(queryset=PatientsModel.objects.all())
+    department = serializers.PrimaryKeyRelatedField(queryset=DepartmentsModel.objects.all())
+    
+    class Meta:
+        model = AppointmentModel
+        fields= ["patient", "department", "date", "description"]
+        read_only_fields=["id","seen"]
+        
+class LabSerializer(serializers.ModelSerializer):
+    patient = serializers.PrimaryKeyRelatedField(queryset=PatientsModel.objects.all())
+    assigned_to = serializers.PrimaryKeyRelatedField(queryset=DepartmentsModel.objects.all())
+    
+    class Meta:
+        model = LabModel
+        fields = ["patient", "assigned_to", "upload", "description", "seen"]
+        read_only_fields = ["id",]
+        
+class XrayLabSerializer(serializers.ModelSerializer):
+    patient = serializers.PrimaryKeyRelatedField(queryset=PatientsModel.objects.all())
+    assigned_to = serializers.PrimaryKeyRelatedField(queryset=DepartmentsModel.objects.all())
+    
+    class Meta:
+        model = XrayModel
+        fields = ["patient", "assigned_to", "upload", "description", "seen"]
+        read_only_fields = ["id",]
         

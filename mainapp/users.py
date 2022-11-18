@@ -13,19 +13,14 @@ class UsersView(views.APIView):
         serializer = UserSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
-        dept = DepartmentsModel.objects.get(id=data["department"])
-        password1 = data["password1"]
-        password2 = data["password2"]
-        
-        if password1 == password2:
-           # bytes = password1.encode('utf-8')
-           # salt = bcrypt.gensalt()
-            password = generate_password_hash(password1, method="pbkdf2:sha256")
+        password = data["password"]
+        if password is not None:
+            password = generate_password_hash(password, method="pbkdf2:sha256")
             user = UsersModel(first_name=data["first_name"], last_name=data["last_name"], email=data["email"],
-                            password = password, phone_number=data["phone_number"], department=dept, usertype=data["usertype"], username=data["username"])
+                            password = password, phone_number=data["phone_number"], department=data["department"], usertype=data["usertype"])
             
             user.save()
-            return Response(data=data, status=status.HTTP_201_CREATED)
+            return Response(data={"user":"created"}, status=status.HTTP_201_CREATED)
         
         return  Response(status=status.HTTP_204_NO_CONTENT, data={"Message": "Passwords have to match!!"})
     
